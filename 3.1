@@ -1,0 +1,120 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef enum kOpt {
+    OPT_SUCCESS,
+    OPT_ERROR,
+    OPT_MEMORY,
+} kOpt;
+
+// Функция сложения двух чисел
+int Add(int a, int b) {
+    int keep = (a & b) << 1;
+    int res = a ^ b;
+    if (keep == 0) {
+        return res;
+    }
+    else {
+        return Add(keep, res);
+    }
+}
+
+// Функция для преобразования числа
+kOpt Convert(char **ans, int *size, int number, int power, size_t *size_res) {
+    int mask, digit;
+    int minus_one = Add(~1, 1);
+    char base [] = "0123456789ABCDEFGHIJKLMNOPQRSTUV", flag = 0;
+    *size = 0;
+    if (!ans || power < 1 || power > 5) {
+        return OPT_ERROR;
+    }
+
+    if (number < 0) {
+        number = Add(~number, 1);
+        flag = '1';
+    }
+
+    do {
+        mask = Add(1 << power, minus_one);
+        digit = number & mask;
+        number >>= power;
+        if (*size >= *size_res) {
+            *size_res = Add(*size_res, *size_res);
+            char *tmp = (char *)realloc(*ans, *size_res);
+            if (!tmp) {
+                return OPT_MEMORY;
+            }
+        *ans = tmp;
+        }
+
+        (*ans)[*size] = base[digit];
+        *size = Add(*size, 1);
+    }
+
+    while (number);
+
+    if (flag) {
+        (*ans)[*size] = '-';
+        *size = Add(*size, 1);
+    }
+
+    return OPT_SUCCESS;
+}
+
+// Функция для вывода результата
+void PrintResult(const char *result, int size) {
+    int i;
+    char minus_one = Add(~1, 1);
+    printf("Result: ");
+    for (i = Add(size, minus_one); i >= 0; i = Add(i, minus_one)) {
+        putchar(result[i]);
+    }
+    putchar('\n');
+}
+
+int main(void) {
+    int exponent;
+    int number;
+    printf("Enter an exponent to make 2^n base: ");
+    if (!scanf("%d", &exponent)) {
+        printf("Error. Incorrect inputs.\n");
+        return -1;
+    }
+    if (exponent < 1 || exponent > 5) {
+        printf("Error. Incorrect inputs.\n");
+        return -2;
+    }
+
+    printf("Enter a number to convert: ");
+    if (!scanf("%d", &number)) {
+        printf("Error. Incorrect inputs.\n");
+        return -3;
+    }
+
+    size_t size_res = 3;
+    char *result = (char *)malloc(size_res);
+
+    if (!result) {
+        fprintf(stderr, "Error malloc memory.\n");
+        return -4;
+    }
+    int size = 0;
+    kOpt status = Convert(&result, &size, number, exponent, &size_res);
+    switch (status) {
+        case OPT_ERROR:
+            fprintf(stderr, "Error. Incorrect inputs.\n");
+            return -5;
+            break;
+
+        case OPT_SUCCESS:
+            PrintResult(result, size);
+            break;
+
+        case OPT_MEMORY:
+            fprintf(stderr, "Error alloc memory.\n");
+            return -6;
+            break;
+    }
+    free(result);
+    return 0;
+}
