@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Структура для хранения узла дерева
+typedef struct TreeNode {
+    char value;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+// Функция для создания нового узла дерева
+TreeNode* create_node(char value) {
+    TreeNode* node = malloc(sizeof(TreeNode));
+    node->value = value;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}
+
+// Функция для добавления узла в дерево
+void add_node(TreeNode** root, char value) {
+    if (*root == NULL) {
+        *root = create_node(value);
+        return;
+    }
+
+    if (value < (*root)->value) {
+        if ((*root)->left == NULL) {
+            (*root)->left = create_node(value);
+        } else {
+            add_node(&((*root)->left), value);
+        }
+    } else {
+        if ((*root)->right == NULL) {
+            (*root)->right = create_node(value);
+        } else {
+            add_node(&((*root)->right), value);
+        }
+    }
+}
+
+// Функция для вывода дерева в наглядной форме
+void print_tree(TreeNode* root) {
+    if (root == NULL) {
+        return;
+    }
+
+    printf("%c\n", root->value);
+    print_tree(root->left);
+    print_tree(root->right);
+}
+
+int main(int argc, char* argv[]) {
+    FILE* file;
+    file = fopen("file.txt", "r");
+
+    if (argc < 2) {
+        printf("Usage: %s <file_path>\n", argv[0]);
+        return 1;
+    }
+
+    // Чтение файла и построение дерева
+    char line[1024];
+    TreeNode* root = NULL;
+    file = fopen(argv[1], "r");
+
+    if (file == NULL) {
+        printf("Error opening file %s\n", argv[1]);
+        return 1;
+    }
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        char* token = strtok(line, " ");
+        while (token != NULL) {
+            char value = token[0];
+            add_node(&root, value);
+            token = strtok(NULL, " ");
+        }
+    }
+
+    // Вывод дерева
+    print_tree(root);
+
+    fclose(file);
+    return 0;
+}
